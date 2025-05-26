@@ -41,23 +41,35 @@ class Command(BaseCommand):
             logger.error(f'Database seeding failed: {str(e)}')
 
     def seed_roles(self, force=False):
-        """Seed default roles"""
+        """Seed default roles with permissions"""
         roles_data = [
             {
                 'name': 'Admin',
-                'description': 'System administrator with full access to all features and settings'
+                'description': 'System administrator with full access to all features and settings',
+                'permissions': [
+                    'dashboard', 'department', 'role', 'leave-setting', 'employees'
+                ]
             },
             {
                 'name': 'Manager',
-                'description': 'Department manager with access to team management and reporting'
+                'description': 'Department manager with access to team management and reporting',
+                'permissions': [
+                    'dashboard', 'leaves-approval', 'leave-history'
+                ]
             },
             {
                 'name': 'HR',
-                'description': 'Human Resources personnel with access to employee management'
+                'description': 'Human Resources personnel with access to employee management',
+                'permissions': [
+                    'dashboard', 'department', 'role', 'leave-setting', 'employees'
+                ]
             },
             {
                 'name': 'Employee',
-                'description': 'Regular employee with basic access to personal features'
+                'description': 'Regular employee with basic access to personal features',
+                'permissions': [
+                    'dashboard', 'my-leaves', 'calender', 'faq'
+                ]
             }
         ]
         
@@ -66,14 +78,15 @@ class Command(BaseCommand):
                 name=role_data['name'],
                 defaults={
                     'description': role_data['description'],
-                    'is_active': True
+                    'is_active': True,
+                    'permissions': role_data['permissions']
                 }
             )
-            
             if created:
                 self.stdout.write(f'Created role: {role.name}')
             elif force:
                 role.description = role_data['description']
+                role.permissions = role_data['permissions']
                 role.save()
                 self.stdout.write(f'Updated role: {role.name}')
             else:

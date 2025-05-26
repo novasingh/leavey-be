@@ -49,12 +49,14 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'social_django',
+    'corsheaders',
     
     # Local apps
     'api',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -206,3 +208,46 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,
 }
+
+# CORS settings
+# Get CORS allowed origins from environment variable
+cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 
+                                  'http://localhost:3000,http://localhost:8080,http://localhost:4200')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
+
+# For development only - allows all origins
+cors_allow_all = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True' if DEBUG else 'False')
+CORS_ALLOW_ALL_ORIGINS = cors_allow_all.lower() == 'true'
+
+# Allow credentials to be included in CORS requests
+cors_allow_credentials = os.environ.get('CORS_ALLOW_CREDENTIALS', 'True')
+CORS_ALLOW_CREDENTIALS = cors_allow_credentials.lower() == 'true'
+
+# Headers that can be used during the actual request
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Methods that can be used during the actual request
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Headers that are exposed to the frontend
+CORS_EXPOSE_HEADERS = [
+    'Content-Type',
+    'X-CSRFToken',
+]

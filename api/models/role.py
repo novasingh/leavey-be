@@ -6,6 +6,7 @@ class Role(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    permissions = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.name
