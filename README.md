@@ -3,8 +3,8 @@
 ## Setup Instructions
 
 ### Prerequisites
-- Python 3.9+
-- PostgreSQL 12+
+- Python 3.9+ 
+- PostgreSQL 12+ ( Install pdAmin `https://www.pgadmin.org/download/pgadmin-4-windows/`)
 
 ### Database Setup
 1. Install PostgreSQL if not already installed
