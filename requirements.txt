@@ -1,10 +1,23 @@
 Django>=4.2.4
+# Django REST Framework and JWT
 djangorestframework>=3.14.0
 djangorestframework-simplejwt>=5.3.0
+# CORS
 django-cors-headers>=4.3.1
+# Swagger/OpenAPI
 drf-yasg>=1.21.10
+# PostgreSQL
+db-sqlite3; sys_platform == 'win32'
 psycopg2-binary>=2.9.10
+# Env support
 python-dotenv>=1.0.0
+# Social Auth
 social-auth-app-django>=5.4.0
+# Requests for social auth
 requests>=2.31.0
+# JWT for token utils
 PyJWT>=2.8.0
+# For sending HTML emails
+html2text>=2020.1.16
+# JSONField (for older Django, not needed for 3.1+)
+jsonfield>=3.1
