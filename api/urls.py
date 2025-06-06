@@ -4,7 +4,7 @@ from . import views
 from .controllers.seed_controller import seed_database_view, seed_status_public
 from .controllers.cors_test_controller import cors_test, cors_test_post
 from .controllers.permission_controller import permission_all
-# from .views import UserCountByDepartmentView, EventViewSet
+from .views import UserCountByDepartmentView, EventViewSet
 
 router = DefaultRouter()
 router.register(r'roles', views.RoleViewSet)
