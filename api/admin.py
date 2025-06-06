@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Role, Department
+from .models import User, Role, Department, Event
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -19,3 +19,10 @@ class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'is_active', 'created_at')
     list_filter = ('is_active',)
     search_fields = ('name', 'description')
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ('day', 'date', 'holiday_name', 'holiday_type')
+    list_filter = ('day', 'date', 'holiday_name', 'holiday_type')
+    search_fields = ('day', 'date', 'holiday_name', 'holiday_type')
+    readonly_fields = ('day',)

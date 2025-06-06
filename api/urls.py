@@ -4,12 +4,18 @@ from . import views
 from .controllers.seed_controller import seed_database_view, seed_status_public
 from .controllers.cors_test_controller import cors_test, cors_test_post
 from .controllers.permission_controller import permission_all
+from .views import UserCountByDepartmentView
 
 router = DefaultRouter()
 router.register(r'roles', views.RoleViewSet)
 router.register(r'users', views.UserViewSet)
+router.register(r'departments', views.DepartmentViewSet)
+router.register(r'events', views.EventViewSet)
 
 urlpatterns = [
+    # API endpoints
+    path('', include(router.urls)),
+
     # Authentication endpoints
     path('auth/register/', views.RegisterView.as_view(), name='register'),
     path('auth/login/', views.LoginView.as_view(), name='login'),
@@ -23,6 +29,8 @@ urlpatterns = [
     path('auth/social/', views.SocialAuthView.as_view(),
          name='social-auth'),
 
+    path('departments/user-count/', UserCountByDepartmentView.as_view(), name='user-count-by-department'),
+
     # Database seeding endpoints
     path('admin/seed/', seed_database_view, name='seed-database'),
     path('seed/status/', seed_status_public, name='seed-status'),
@@ -33,7 +41,4 @@ urlpatterns = [
 
     # Permissions API
     path('permission-all/', permission_all, name='permission-all'),
-
-    # API endpoints
-    path('', include(router.urls)),
 ]
