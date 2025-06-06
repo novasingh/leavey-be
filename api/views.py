@@ -12,14 +12,25 @@ from drf_yasg import openapi
 from datetime import timedelta
 import requests
 import uuid
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import PermissionDenied
+from .models import LeaveRequest
+from .serializers import LeaveRequestSerializer
+
 
 from .models import User, Role, Department, Event
-from .serializers.department_serializer import DepartmentSerializer
 from .serializers.user_serializer import UserSerializer, UserCreateSerializer
 from .serializers.role_serializer import RoleSerializer
 from .serializers.event_serializer import EventSerializer
 from .serializers import department_serializer
 from .utils.emails import send_verification_email, send_password_reset_email
+from .serializers.event_serializer import EventSerializer
+from .serializers.department_serializer import DepartmentSerializer
+from .models.leave import LeaveType, LeaveRequest, LeaveSummary, LeaveApproval
+from .serializers.leave_serializer import (
+    LeaveTypeSerializer, LeaveRequestSerializer, LeaveSummarySerializer, LeaveApprovalSerializer
+)
+
 
 # Authentication Views
 class RegisterView(APIView):
@@ -472,7 +483,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-# Department ViewSet
+#Department ViewSet
 class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.filter(is_active=True)
     serializer_class = DepartmentSerializer
@@ -494,3 +505,52 @@ class UserCountByDepartmentView(APIView):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+
+
+# LeaveType ViewSet
+class LeaveTypeViewSet(viewsets.ModelViewSet):
+    queryset = LeaveType.objects.all()
+    serializer_class = LeaveTypeSerializer
+
+
+class LeaveRequestViewSet(viewsets.ModelViewSet):
+    queryset = LeaveRequest.objects.all()
+    serializer_class = LeaveRequestSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Admins and managers can see all; employees only their own
+        if user.is_staff or (user.role and user.role.name == 'Manager'):
+            return LeaveRequest.objects.all()
+        return LeaveRequest.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = self.get_object()
+
+        # Employees can only update their own requests (before approval)
+        if instance.user != user and not (user.is_staff or (user.role and user.role.name == 'Manager')):
+            raise PermissionDenied("You can only modify your own leave requests.")
+
+        # If employee is editing a request that's already approved/rejected, block it
+        if instance.user == user and instance.status in ['Approved', 'Rejected']:
+            raise PermissionDenied("You cannot modify a request that has already been processed.")
+
+        serializer.save()
+
+
+# LeaveSummary ViewSet
+class LeaveSummaryViewSet(viewsets.ModelViewSet):
+    queryset = LeaveSummary.objects.all()
+    serializer_class = LeaveSummarySerializer
+
+# LeaveApproval ViewSet
+class LeaveApprovalViewSet(viewsets.ModelViewSet):
+    queryset = LeaveApproval.objects.all()
+    serializer_class = LeaveApprovalSerializer

@@ -1,4 +1,3 @@
-# models/event.py
 from django.db import models
 import datetime
 
@@ -14,7 +13,7 @@ class Event(models.Model):
     holiday_name = models.CharField(max_length=100)  # e.g., Eid Adha
     holiday_type = models.CharField(max_length=50, choices=HOLIDAY_TYPE_CHOICES)
 
-    # def __str__(self):
+    # def _str_(self):
     #     return f"{self.holiday_name} on {self.date}"
 
     def save(self, *args, **kwargs):
