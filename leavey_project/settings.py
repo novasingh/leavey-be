@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'drf_yasg',
     'social_django',
     'corsheaders',
-    
     # Local apps
     'api',
 ]
@@ -156,6 +155,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        #'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
@@ -212,7 +212,7 @@ SWAGGER_SETTINGS = {
 # CORS settings
 # Get CORS allowed origins from environment variable
 cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 
-                                  'http://localhost:3000,http://localhost:8080,http://localhost:4200')
+                                  'http://localhost:3000,http://localhost:8080,http://localhost:4200, http://localhost:5173, http://127.0.0.1:5173')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
 
 # For development only - allows all origins

@@ -4,10 +4,17 @@ from . import views
 from .controllers.seed_controller import seed_database_view, seed_status_public
 from .controllers.cors_test_controller import cors_test, cors_test_post
 from .controllers.permission_controller import permission_all
+# from .views import UserCountByDepartmentView, EventViewSet
 
 router = DefaultRouter()
 router.register(r'roles', views.RoleViewSet)
 router.register(r'users', views.UserViewSet)
+router.register(r'departments', views.DepartmentViewSet)
+router.register(r'events', views.EventViewSet)
+router.register(r'leave-types', views.LeaveTypeViewSet)
+router.register(r'leave-requests', views.LeaveRequestViewSet)
+router.register(r'leave-summaries', views.LeaveSummaryViewSet)
+router.register(r'leave-approvals', views.LeaveApprovalViewSet)
 
 urlpatterns = [
     # Authentication endpoints
@@ -26,6 +33,9 @@ urlpatterns = [
     # Database seeding endpoints
     path('admin/seed/', seed_database_view, name='seed-database'),
     path('seed/status/', seed_status_public, name='seed-status'),
+
+     #View for user count by department
+    path('departments/user-count/', views.UserCountByDepartmentView.as_view(), name='user-count-by-department'),
 
     # CORS test endpoints
     path('test/cors/', cors_test, name='cors-test'),
