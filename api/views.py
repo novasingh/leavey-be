@@ -1,5 +1,8 @@
 from rest_framework import status, permissions, viewsets, generics
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count
+from rest_framework import status, permissions, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -11,12 +14,25 @@ from drf_yasg import openapi
 from datetime import timedelta
 import requests
 import uuid
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import PermissionDenied
+from .models import LeaveRequest
+from .serializers import LeaveRequestSerializer
 
 from .models import User, Role, Department
 from .serializers.user_serializer import UserSerializer, UserCreateSerializer, ManagerListSerializer
+
+from .models import User, Role, Department, Event
+from .serializers.user_serializer import UserSerializer, UserCreateSerializer
 from .serializers.role_serializer import RoleSerializer
-from .serializers.department_serializer import DepartmentSerializer
 from .utils.emails import send_verification_email, send_password_reset_email
+from .serializers.event_serializer import EventSerializer
+from .serializers.department_serializer import DepartmentSerializer
+from .models.leave import LeaveType, LeaveRequest, LeaveSummary, LeaveApproval
+from .serializers.leave_serializer import (
+    LeaveTypeSerializer, LeaveRequestSerializer, LeaveSummarySerializer, LeaveApprovalSerializer
+)
+
 
 # Authentication Views
 class RegisterView(APIView):
@@ -263,76 +279,17 @@ class SocialAuthView(APIView):
         if provider == 'google':
             user_info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
             headers = {'Authorization': f'Bearer {access_token}'}
-            
             try:
                 response = requests.get(user_info_url, headers=headers)
                 response.raise_for_status()
                 user_info = response.json()
-                
-                # Get or create user
-                email = user_info.get('email')
-                if not email:
-                    return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
-                
-                try:
-                    user = User.objects.get(email=email)
-                    # Update Google info if needed
-                    user.google_id = user_info.get('sub')
-                    user.social_type = 'google'
-                    user.social_token = access_token
-                    user.social_expires_at = timezone.now() + timedelta(hours=1)
-                    user.is_email_verified = True
-                    user.save()
-                except User.DoesNotExist:
-                    # Create new user
-                    username = email.split('@')[0]
-                    # Check if username exists and modify if needed
-                    if User.objects.filter(username=username).exists():
-                        username = f"{username}{User.objects.count()}"
-                        
-                    user = User.objects.create_user(
-                        email=email,
-                        username=username,
-                        password=None,
-                        first_name=user_info.get('given_name', ''),
-                        last_name=user_info.get('family_name', ''),
-                        google_id=user_info.get('sub'),
-                        social_type='google',
-                        social_token=access_token,
-                        social_expires_at=timezone.now() + timedelta(hours=1),
-                        is_email_verified=True
-                    )
-                
-                # Generate tokens
-                refresh = RefreshToken.for_user(user)
-                
-                return Response({
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                    'user': UserSerializer(user).data
-                })
-                
-            except requests.exceptions.RequestException as e:
-                return Response({'error': f'Error validating Google token: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Handle Azure OAuth
-        elif provider == 'azure':
-            graph_url = 'https://graph.microsoft.com/v1.0/me'
-            headers = {'Authorization': f'Bearer {access_token}'}
-            
-            try:
-                response = requests.get(graph_url, headers=headers)
-                response.raise_for_status()
-                user_info = response.json()
-                
-                # Get or create user
-                email = user_info.get('mail') or user_info.get('userPrincipalName')
+
+                email = user_info.get('userPrincipalName') or user_info.get('mail')
                 if not email:
                     return Response({'error': 'Email not provided by Azure'}, status=status.HTTP_400_BAD_REQUEST)
-                
+
                 try:
                     user = User.objects.get(email=email)
-                    # Update Azure info if needed
                     user.azure_id = user_info.get('id')
                     user.social_type = 'azure'
                     user.social_token = access_token
@@ -340,12 +297,10 @@ class SocialAuthView(APIView):
                     user.is_email_verified = True
                     user.save()
                 except User.DoesNotExist:
-                    # Create new user
                     username = email.split('@')[0]
-                    # Check if username exists and modify if needed
                     if User.objects.filter(username=username).exists():
                         username = f"{username}{User.objects.count()}"
-                        
+
                     user = User.objects.create_user(
                         email=email,
                         username=username,
@@ -358,18 +313,68 @@ class SocialAuthView(APIView):
                         social_expires_at=timezone.now() + timedelta(hours=1),
                         is_email_verified=True
                     )
-                
-                # Generate tokens
+
                 refresh = RefreshToken.for_user(user)
-                
+
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
                     'user': UserSerializer(user).data
                 })
-                
             except requests.exceptions.RequestException as e:
-                return Response({'error': f'Error validating Azure token: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': f'Error validating Azure token: {str(e)}'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # Handle Azure OAuth
+        elif provider == 'azure':
+            # Example endpoint to get user info from Microsoft Graph API
+            user_info_url = 'https://graph.microsoft.com/v1.0/me'
+            headers = {'Authorization': f'Bearer {access_token}'}
+
+            try:
+                response = requests.get(user_info_url, headers=headers)
+                response.raise_for_status()
+                user_info = response.json()
+
+                email = user_info.get('mail') or user_info.get('userPrincipalName')
+                if not email:
+                    return Response({'error': 'Email not provided by Azure'}, status=status.HTTP_400_BAD_REQUEST)
+
+                try:
+                    user = User.objects.get(email=email)
+                    user.azure_id = user_info.get('id')
+                    user.social_type = 'azure'
+                    user.social_token = access_token
+                    user.social_expires_at = timezone.now() + timedelta(hours=1)
+                    user.is_email_verified = True
+                    user.save()
+                except User.DoesNotExist:
+                    username = email.split('@')[0]
+                    if User.objects.filter(username=username).exists():
+                        username = f"{username}_{uuid.uuid4().hex[:4]}"
+
+                    user = User.objects.create(
+                        username=username,
+                        email=email,
+                        azure_id=user_info.get('id'),
+                        social_type='azure',
+                        social_token=access_token,
+                        social_expires_at=timezone.now() + timedelta(hours=1),
+                        is_email_verified=True
+                    )
+                    user.set_unusable_password()
+                    user.save()
+
+            except requests.RequestException:
+                return Response({'error': 'Failed to fetch user info from Azure'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Return tokens
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': UserSerializer(user).data
+            })
 
 # Role ViewSet
 class RoleViewSet(viewsets.ModelViewSet):
@@ -425,7 +430,6 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 # User ViewSet
 class UserViewSet(viewsets.ModelViewSet):
-    # queryset = User.objects.all()
     queryset = User.objects.all().select_related('role', 'department').order_by('first_name')
     serializer_class = UserSerializer
     
@@ -440,7 +444,7 @@ class UserViewSet(viewsets.ModelViewSet):
             department = user.department
             department.manager = user
             department.save()
-    
+
     @swagger_auto_schema(
         operation_description="List all users",
         responses={
@@ -449,7 +453,6 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
     @swagger_auto_schema(
         operation_description="Retrieve a user by ID",
         responses={
@@ -500,3 +503,57 @@ class UserCountByDepartmentView(APIView):
                 'total_employees': count
             })
         return Response(data)
+
+# Event Dashboard
+class EventViewSet(viewsets.ModelViewSet):
+    queryset = Event.objects.all()
+    serializer_class = EventSerializer
+
+
+# LeaveType ViewSet
+class LeaveTypeViewSet(viewsets.ModelViewSet):
+    queryset = LeaveType.objects.all()
+    serializer_class = LeaveTypeSerializer
+
+
+class LeaveRequestViewSet(viewsets.ModelViewSet):
+    queryset = LeaveRequest.objects.all()
+    serializer_class = LeaveRequestSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Admins and managers can see all; employees only their own
+        if user.is_staff or (user.role and user.role.name == 'Manager'):
+            return LeaveRequest.objects.all()
+        return LeaveRequest.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = self.get_object()
+
+        # Employees can only update their own requests (before approval)
+        if instance.user != user and not (user.is_staff or (user.role and user.role.name == 'Manager')):
+            raise PermissionDenied("You can only modify your own leave requests.")
+
+        # If employee is editing a request that's already approved/rejected, block it
+        if instance.user == user and instance.status in ['Approved', 'Rejected']:
+            raise PermissionDenied("You cannot modify a request that has already been processed.")
+
+        serializer.save()
+
+
+# LeaveSummary ViewSet
+class LeaveSummaryViewSet(viewsets.ModelViewSet):
+    queryset = LeaveSummary.objects.all()
+    serializer_class = LeaveSummarySerializer
+
+# LeaveApproval ViewSet
+class LeaveApprovalViewSet(viewsets.ModelViewSet):
+    queryset = LeaveApproval.objects.all()
+    serializer_class = LeaveApprovalSerializer
