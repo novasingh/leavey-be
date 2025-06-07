@@ -1,4 +1,5 @@
-from rest_framework import status, permissions, viewsets
+from rest_framework import status, permissions, viewsets, generics
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -12,8 +13,9 @@ import requests
 import uuid
 
 from .models import User, Role, Department
-from .serializers.user_serializer import UserSerializer, UserCreateSerializer
+from .serializers.user_serializer import UserSerializer, UserCreateSerializer, ManagerListSerializer
 from .serializers.role_serializer import RoleSerializer
+from .serializers.department_serializer import DepartmentSerializer
 from .utils.emails import send_verification_email, send_password_reset_email
 
 # Authentication Views
@@ -423,13 +425,21 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 # User ViewSet
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    # queryset = User.objects.all()
+    queryset = User.objects.all().select_related('role', 'department').order_by('first_name')
     serializer_class = UserSerializer
     
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
         return UserSerializer
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        if user.role and user.role.name == 'Manager' and user.department:
+            department = user.department
+            department.manager = user
+            department.save()
     
     @swagger_auto_schema(
         operation_description="List all users",
@@ -439,16 +449,6 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
-    @swagger_auto_schema(
-        operation_description="Create a new user",
-        request_body=UserCreateSerializer,
-        responses={
-            201: UserSerializer
-        }
-    )
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     
     @swagger_auto_schema(
         operation_description="Retrieve a user by ID",
@@ -477,3 +477,26 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    queryset = Department.objects.all().order_by('name')
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated]
+
+class ManagerListView(generics.ListAPIView):
+    serializer_class = ManagerListSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(role__name='Manager')
+
+
+class UserCountByDepartmentView(APIView):
+    def get(self, request):
+        data = []
+        for dept in Department.objects.all():
+            count = dept.user_set.count()
+            data.append({
+                'department': dept.name,
+                'total_employees': count
+            })
+        return Response(data)

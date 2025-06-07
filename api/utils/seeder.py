@@ -253,11 +253,16 @@ def _set_manager_relationships():
         manager_user.save()
         hr_user.save()
         employee_user.save()
-        
-        logger.info('Manager relationships set successfully')
-        
-    except User.DoesNotExist as e:
-        logger.warning(f'Could not set manager relationships: {str(e)}')
+
+        it_department = Department.objects.get(name='IT')
+        it_department.manager = manager_user
+        it_department.save()
+
+        logger.info('Manager relationships and department manager set successfully')
+
+
+    except (User.DoesNotExist, Department.DoesNotExist) as e:
+        logger.warning(f'Could not set manager relationships or department manager: {str(e)}')
 
 def check_seed_status():
     """

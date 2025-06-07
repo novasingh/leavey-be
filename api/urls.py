@@ -4,10 +4,12 @@ from . import views
 from .controllers.seed_controller import seed_database_view, seed_status_public
 from .controllers.cors_test_controller import cors_test, cors_test_post
 from .controllers.permission_controller import permission_all
+from .views import UserCountByDepartmentView
 
 router = DefaultRouter()
 router.register(r'roles', views.RoleViewSet)
 router.register(r'users', views.UserViewSet)
+router.register(r'departments', views.DepartmentViewSet, basename='department')
 
 urlpatterns = [
     # Authentication endpoints
@@ -22,6 +24,9 @@ urlpatterns = [
          name='password-reset-confirm'),
     path('auth/social/', views.SocialAuthView.as_view(),
          name='social-auth'),
+
+    path('managers/', views.ManagerListView.as_view(), name='manager-list'),
+    path('departments/user-count', UserCountByDepartmentView.as_view(), name='user-count-by-department'),
 
     # Database seeding endpoints
     path('admin/seed/', seed_database_view, name='seed-database'),
