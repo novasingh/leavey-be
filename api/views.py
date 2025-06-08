@@ -1,37 +1,35 @@
 from rest_framework import status, permissions, viewsets, generics
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count
-from rest_framework import status, permissions, viewsets
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
-from django.conf import settings
-from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import timedelta
 import requests
 import uuid
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.exceptions import PermissionDenied
-from .models import LeaveRequest
-from .serializers import LeaveRequestSerializer
 
-from .models import User, Role, Department
-from .serializers.user_serializer import UserSerializer, UserCreateSerializer, ManagerListSerializer
-
-from .models import User, Role, Department, Event
-from .serializers.user_serializer import UserSerializer, UserCreateSerializer
-from .serializers.role_serializer import RoleSerializer
-from .utils.emails import send_verification_email, send_password_reset_email
-from .serializers.event_serializer import EventSerializer
-from .serializers.department_serializer import DepartmentSerializer
-from .models.leave import LeaveType, LeaveRequest, LeaveSummary, LeaveApproval
-from .serializers.leave_serializer import (
-    LeaveTypeSerializer, LeaveRequestSerializer, LeaveSummarySerializer, LeaveApprovalSerializer
+# Consolidated imports for models
+from .models import (
+    User, Role, Department, Event,
+    LeaveType, LeaveRequest, LeaveSummary, LeaveApproval, LeaveSetting
 )
+
+# Consolidated imports for serializers
+from .serializers.user_serializer import UserSerializer, UserCreateSerializer, ManagerListSerializer
+from .serializers.role_serializer import RoleSerializer
+from .serializers.department_serializer import DepartmentSerializer
+from .serializers.event_serializer import EventSerializer
+from .serializers.leave_serializer import (
+    LeaveTypeSerializer, LeaveRequestSerializer, LeaveSummarySerializer,
+    LeaveApprovalSerializer, LeaveSettingSerializer
+)
+
+from .utils.emails import send_verification_email, send_password_reset_email
+
 
 
 # Authentication Views
@@ -514,7 +512,15 @@ class EventViewSet(viewsets.ModelViewSet):
 class LeaveTypeViewSet(viewsets.ModelViewSet):
     queryset = LeaveType.objects.all()
     serializer_class = LeaveTypeSerializer
+    permission_classes = [IsAuthenticated]
 
+class LeaveSettingView(generics.RetrieveUpdateAPIView):
+    serializer_class = LeaveSettingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        obj, created = LeaveSetting.objects.get_or_create(pk=1)
+        return obj
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
     queryset = LeaveRequest.objects.all()

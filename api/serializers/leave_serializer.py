@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models.leave import LeaveType, LeaveRequest, LeaveSummary, LeaveApproval
+from api.models.leave import LeaveType, LeaveRequest, LeaveSummary, LeaveApproval, LeaveSetting
 
 
 class LeaveTypeSerializer(serializers.ModelSerializer):
@@ -7,18 +7,6 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
         model = LeaveType
         fields = '__all__'
         read_only_fields = ['leave_type_id']
-
-
-# class LeaveRequestSerializer(serializers.ModelSerializer):
-#     leave_type = serializers.PrimaryKeyRelatedField(queryset=LeaveType.objects.all())
-#     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    
-#     class Meta:
-#         model = LeaveRequest
-#         fields = '__all__'
-#         read_only_fields = ['request_id', 'created_at', 'updated_at', 'days', 'user']
-
-
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
     leave_type = serializers.PrimaryKeyRelatedField(queryset=LeaveType.objects.all())
@@ -70,3 +58,8 @@ class LeaveApprovalSerializer(serializers.ModelSerializer):
         model = LeaveApproval
         fields = '__all__'
         read_only_fields = ['approval_id', 'created_at', 'updated_at']
+
+class LeaveSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeaveSetting
+        fields = '__all__'
