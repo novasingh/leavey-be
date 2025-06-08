@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_email_verified = models.BooleanField(default=False)
     reset_password_token = models.CharField(max_length=255, blank=True, null=True)
     reset_password_expires = models.DateTimeField(null=True, blank=True)
-    
+
     # Social login fields
     google_id = models.CharField(max_length=255, blank=True, null=True)
     azure_id = models.CharField(max_length=255, blank=True, null=True)

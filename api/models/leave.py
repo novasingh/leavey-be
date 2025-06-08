@@ -6,8 +6,8 @@ class LeaveType(models.Model):
     leave_type_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    days = models.PositiveIntegerField()  # Restrict to non-negative numbers
-    is_active = models.BooleanField(default=True)  # Admin can disable instead of deleting
+    days = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

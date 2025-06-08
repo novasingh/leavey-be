@@ -35,7 +35,6 @@ urlpatterns = [
     # Database seeding endpoints
     path('admin/seed/', seed_database_view, name='seed-database'),
     path('seed/status/', seed_status_public, name='seed-status'),
-    
     # CORS test endpoints
     path('test/cors/', cors_test, name='cors-test'),
     path('test/cors/post/', cors_test_post, name='cors-test-post'),
