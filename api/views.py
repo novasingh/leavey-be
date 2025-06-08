@@ -1,4 +1,5 @@
-from rest_framework import status, permissions, viewsets
+from rest_framework import status, permissions, viewsets, generics
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -10,21 +11,28 @@ from drf_yasg import openapi
 from datetime import timedelta
 import requests
 import uuid
-from rest_framework.parsers import MultiPartParser, FormParser
+
+
+# Consolidated imports for models
+from .models import (
+    User, Role, Department, Event,
+    LeaveType, LeaveRequest, LeaveSetting
+)
+
+
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import PermissionDenied
 from .models import LeaveRequest
 from .serializers import LeaveRequestSerializer
 
 
-from .models import User, Role, Department, Event
-from .serializers.user_serializer import UserSerializer, UserCreateSerializer
+from .serializers.user_serializer import  UserSerializer, UserCreateSerializer, ManagerListSerializer
 from .serializers.role_serializer import RoleSerializer
 from .utils.emails import send_verification_email, send_password_reset_email
 from .serializers.event_serializer import EventSerializer
 from .serializers.department_serializer import DepartmentSerializer
-from .models.leave import LeaveType, LeaveRequest, LeaveSummary, LeaveApproval
 from .serializers.leave_serializer import (
-    LeaveTypeSerializer, LeaveRequestSerializer, LeaveSummarySerializer, LeaveApprovalSerializer
+    LeaveTypeSerializer, LeaveRequestSerializer, LeaveSettingSerializer
 )
 
 
@@ -496,6 +504,12 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     serializer_class = DepartmentSerializer
     permission_classes = [permissions.IsAdminUser]
 
+class ManagerListView(generics.ListAPIView):
+    serializer_class = ManagerListSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(role__name='Manager')
+
 # Count User per Department
 class UserCountByDepartmentView(APIView):
     def get(self, request):
@@ -519,11 +533,18 @@ class LeaveTypeViewSet(viewsets.ModelViewSet):
     queryset = LeaveType.objects.all()
     serializer_class = LeaveTypeSerializer
 
+class LeaveSettingView(generics.RetrieveUpdateAPIView):
+    serializer_class = LeaveSettingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        obj, created = LeaveSetting.objects.get_or_create(pk=1)
+        return obj
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -541,23 +562,20 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         user = self.request.user
         instance = self.get_object()
 
-        # Employees can only update their own requests (before approval)
+        # Only managers or staff can update requests
         if instance.user != user and not (user.is_staff or (user.role and user.role.name == 'Manager')):
-            raise PermissionDenied("You can only modify your own leave requests.")
+            raise PermissionDenied("Only managers can approve or reject leave requests.")
 
-        # If employee is editing a request that's already approved/rejected, block it
+        # Employees cannot modify processed requests
         if instance.user == user and instance.status in ['Approved', 'Rejected']:
-            raise PermissionDenied("You cannot modify a request that has already been processed.")
+            raise PermissionDenied("You cannot modify a processed leave request.")
 
-        serializer.save()
+        status = self.request.data.get('status', instance.status)
+        note = self.request.data.get('note', instance.note)
 
-
-# LeaveSummary ViewSet
-class LeaveSummaryViewSet(viewsets.ModelViewSet):
-    queryset = LeaveSummary.objects.all()
-    serializer_class = LeaveSummarySerializer
-
-# LeaveApproval ViewSet
-class LeaveApprovalViewSet(viewsets.ModelViewSet):
-    queryset = LeaveApproval.objects.all()
-    serializer_class = LeaveApprovalSerializer
+        serializer.save(
+            status=status,
+            note=note,
+            reviewed_by=user,
+            reviewed_at=timezone.now()
+        )

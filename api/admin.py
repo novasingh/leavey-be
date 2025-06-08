@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Role, Department, LeaveType, LeaveRequest, LeaveSummary, LeaveApproval, Event
+from .models import User, Role, Department, LeaveType, LeaveRequest, Event
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -39,23 +39,6 @@ class LeaveRequestAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('days', 'created_at', 'updated_at')
 
-# admin.site.register(LeaveRequest, LeaveRequestAdmin)
-# class LeaveRequestAdmin(admin.ModelAdmin):
-#     list_display = ('request_id', 'user', 'leave_type', 'start_date', 'end_date', 'days', 'created_at', 'updated_at')
-#     list_filter = ('leave_type', 'user', 'start_date', 'end_date')
-#     search_fields = ('user__username', 'leave_type__name')
-
-@admin.register(LeaveSummary)
-class LeaveSummaryAdmin(admin.ModelAdmin):
-    list_display = ('summary_id', 'user', 'leave_type', 'start_date', 'end_date', 'days_taken', 'status', 'reviewed_by', 'created_at', 'updated_at')
-    list_filter = ('status', 'leave_type', 'user', 'reviewed_by')
-    search_fields = ('user__username', 'leave_type__name')
-
-@admin.register(LeaveApproval)
-class LeaveApprovalAdmin(admin.ModelAdmin):
-    list_display = ('approval_id', 'summary', 'manager', 'action', 'created_at', 'updated_at')
-    list_filter = ('action', 'manager')
-    search_fields = ('manager__username',)
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):

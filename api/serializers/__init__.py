@@ -10,6 +10,5 @@ from .auth_serializer import (
 from .leave_serializer import (
     LeaveRequestSerializer,
     LeaveTypeSerializer,
-    LeaveSummarySerializer,
-    LeaveApprovalSerializer,
+    LeaveSettingSerializer
 )
