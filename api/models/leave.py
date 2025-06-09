@@ -8,6 +8,7 @@ class LeaveType(models.Model):
     description = models.TextField(blank=True, null=True)
     days = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
+    color = models.CharField(max_length=7, default="#000000")
 
     def __str__(self):
         return self.name

@@ -37,7 +37,6 @@ from .serializers.leave_serializer import (
 
 from .utils.emails import send_verification_email, send_password_reset_email
 
-
 # Authentication Views
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -497,16 +496,6 @@ class ManagerListView(generics.ListAPIView):
         return User.objects.filter(role__name='Manager')
 
 
-<<<<<<< HEAD
-class ManagerListView(generics.ListAPIView):
-    serializer_class = ManagerListSerializer
-
-    def get_queryset(self):
-        return User.objects.filter(role__name='Manager')
-
-# Count User per Department
-=======
->>>>>>> 4d3ac3ab0744812f9cbc1b7331bfff6421fa2b4e
 class UserCountByDepartmentView(APIView):
     def get(self, request):
         data = []
@@ -570,22 +559,9 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         status = self.request.data.get('status', instance.status)
         note = self.request.data.get('note', instance.note)
 
-<<<<<<< HEAD
         serializer.save(
             status=status,
             note=note,
             reviewed_by=user,
             reviewed_at=timezone.now()
         )
-=======
-
-# LeaveSummary ViewSet
-class LeaveSummaryViewSet(viewsets.ModelViewSet):
-    queryset = LeaveSummary.objects.all()
-    serializer_class = LeaveSummarySerializer
-
-# LeaveApproval ViewSet
-class LeaveApprovalViewSet(viewsets.ModelViewSet):
-    queryset = LeaveApproval.objects.all()
-    serializer_class = LeaveApprovalSerializer
->>>>>>> 4d3ac3ab0744812f9cbc1b7331bfff6421fa2b4e

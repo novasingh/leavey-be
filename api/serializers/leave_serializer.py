@@ -15,7 +15,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
     # Keep user write-hidden but expose read-only name/email for display
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     employee_name = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = LeaveRequest
         fields = '__all__'
@@ -32,6 +32,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
             return full_name if full_name else obj.user.username
         return "Unknown"
+
 
 
 class LeaveSettingSerializer(serializers.ModelSerializer):
