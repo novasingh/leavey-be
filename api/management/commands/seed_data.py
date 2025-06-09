@@ -31,6 +31,15 @@ class Command(BaseCommand):
                 # Seed departments
                 self.seed_departments(force)
                 
+                # Seed leave types
+                self.seed_leave_types(force)
+                
+                # Seed leave settings
+                self.seed_leave_settings(force)
+                
+                # Seed public holidays
+                self.seed_public_holidays(force)
+                
                 # Seed users
                 self.seed_users(force)
                 
@@ -134,6 +143,190 @@ class Command(BaseCommand):
                 self.stdout.write(f'Updated department: {department.name}')
             else:
                 self.stdout.write(f'Department already exists: {department.name}')
+
+    def seed_leave_types(self, force=False):
+        """Seed default leave types"""
+        leave_types_data = [
+            {
+                'name': 'Annual Leave',
+                'description': 'Paid time off for vacation or personal use',
+                'days': 20,
+                'is_active': True,
+                'color': '#4CAF50',
+            },
+            {
+                'name': 'Sick Leave',
+                'description': 'Paid time off for illness or medical needs',
+                'days': 10,
+                'is_active': True,
+                'color': '#F44336',
+            },
+            {
+                'name': 'Casual Leave',
+                'description': 'Short-term leave for personal matters',
+                'days': 7,
+                'is_active': True,
+                'color': '#2196F3',
+            },
+            {
+                'name': 'Maternity Leave',
+                'description': 'Leave for maternity purposes',
+                'days': 90,
+                'is_active': True,
+                'color': '#E91E63',
+            },
+            {
+                'name': 'Paternity Leave',
+                'description': 'Leave for paternity purposes',
+                'days': 15,
+                'is_active': True,
+                'color': '#9C27B0',
+            },
+        ]
+        from api.models.leave import LeaveType
+        for leave_type_data in leave_types_data:
+            leave_type, created = LeaveType.objects.get_or_create(
+                name=leave_type_data['name'],
+                defaults=leave_type_data
+            )
+            if created:
+                self.stdout.write(f'Created leave type: {leave_type.name}')
+            elif force:
+                for key, value in leave_type_data.items():
+                    setattr(leave_type, key, value)
+                leave_type.save()
+                self.stdout.write(f'Updated leave type: {leave_type.name}')
+            else:
+                self.stdout.write(f'Leave type already exists: {leave_type.name}')
+
+    def seed_leave_settings(self, force=False):
+        """Seed default leave settings (singleton)"""
+        from api.models.leave import LeaveSetting
+        defaults = {
+            'working_hours_start': '09:00',
+            'working_hours_end': '17:00',
+            'is_flexible_hours_enabled': False,
+            'is_weekday_workday': True,
+            'is_weekend_workday': False,
+            'cycle_type': 'annual',
+        }
+        leave_setting, created = LeaveSetting.objects.get_or_create(
+            singleton_id=1,
+            defaults=defaults
+        )
+        if created:
+            self.stdout.write('Created default leave settings')
+        elif force:
+            for key, value in defaults.items():
+                setattr(leave_setting, key, value)
+            leave_setting.save()
+            self.stdout.write('Updated default leave settings')
+        else:
+            self.stdout.write('Leave settings already exist')
+
+    def seed_public_holidays(self, force=False):
+        """Seed default public holidays for Malaysia using the Event model fields"""
+        from api.models.event import Event
+        from datetime import datetime
+        holidays_data = [
+            {
+                'holiday_name': "New Year's Day",
+                'date': '2025-01-01',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Federal Territory Day",
+                'date': '2025-02-01',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Chinese New Year",
+                'date': '2025-01-29',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Chinese New Year (2nd day)",
+                'date': '2025-01-30',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Labour Day",
+                'date': '2025-05-01',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Wesak Day",
+                'date': '2025-05-12',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Hari Raya Aidilfitri",
+                'date': '2025-03-30',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Hari Raya Aidilfitri (2nd day)",
+                'date': '2025-03-31',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Agong's Birthday",
+                'date': '2025-06-02',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Hari Raya Haji",
+                'date': '2025-06-07',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Awal Muharram",
+                'date': '2025-07-27',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Merdeka Day",
+                'date': '2025-08-31',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Malaysia Day",
+                'date': '2025-09-16',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Prophet Muhammad's Birthday",
+                'date': '2025-09-15',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Deepavali",
+                'date': '2025-10-20',
+                'holiday_type': 'Public Holiday',
+            },
+            {
+                'holiday_name': "Christmas Day",
+                'date': '2025-12-25',
+                'holiday_type': 'Public Holiday',
+            },
+        ]
+        for holiday in holidays_data:
+            date_obj = datetime.strptime(holiday['date'], '%Y-%m-%d').date()
+            event, created = Event.objects.get_or_create(
+                holiday_name=holiday['holiday_name'],
+                date=date_obj,
+                defaults={
+                    'holiday_type': holiday['holiday_type']
+                }
+            )
+            if created:
+                self.stdout.write(f"Created public holiday: {event.holiday_name}")
+            elif force:
+                event.holiday_type = holiday['holiday_type']
+                event.save()
+                self.stdout.write(f"Updated public holiday: {event.holiday_name}")
+            else:
+                self.stdout.write(f"Public holiday already exists: {event.holiday_name}")
 
     def seed_users(self, force=False):
         """Seed default users"""
