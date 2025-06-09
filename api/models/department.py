@@ -3,6 +3,7 @@ from django.conf import settings
 
 class Department(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    icon = models.CharField(max_length=5, blank=True, null=True)
     description = models.TextField(default="", blank=True)
     is_active = models.BooleanField(default=True)
     manager = models.ForeignKey(
