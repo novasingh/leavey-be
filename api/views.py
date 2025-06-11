@@ -11,6 +11,7 @@ from drf_yasg import openapi
 from datetime import timedelta
 import requests
 import uuid
+from django.db import models
 
 
 # Consolidated imports for models
@@ -448,6 +449,29 @@ class UserViewSet(viewsets.ModelViewSet):
             department.manager = user
             department.save()
 
+    def perform_update(self, serializer):
+        old_role = serializer.instance.role
+        user = serializer.save()
+
+        new_role = user.role
+        department = user.department
+
+        if new_role != old_role and new_role and new_role.name == 'Manager':
+            if department:
+                if department.manager and department.manager != user:
+                    old_manager_dept = Department.objects.filter(manager=department.manager).first()
+                    if old_manager_dept:
+                        old_manager_dept.manager = None
+                        old_manager_dept.save()
+
+                department.manager = user
+                department.save()
+
+        elif new_role != old_role and old_role and old_role.name == 'Manager':
+            if department and department.manager == user:
+                department.manager = None
+                department.save()
+
     @swagger_auto_schema(
         operation_description="List all users",
         responses={
@@ -456,6 +480,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
     @swagger_auto_schema(
         operation_description="Retrieve a user by ID",
         responses={
@@ -464,16 +489,6 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
-    
-    @swagger_auto_schema(
-        operation_description="Update a user",
-        request_body=UserSerializer,
-        responses={
-            200: UserSerializer
-        }
-    )
-    def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
     
     @swagger_auto_schema(
         operation_description="Delete a user",
@@ -491,10 +506,21 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
 class ManagerListView(generics.ListAPIView):
     serializer_class = ManagerListSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return User.objects.filter(role__name='Manager')
+        department_id = self.request.query_params.get('department_id', None)
+        queryset = User.objects.filter(role__name='Manager')
 
+        if department_id:
+            queryset = queryset.filter(
+                models.Q(managed_departments__isnull=True) |
+                models.Q(managed_departments__id=department_id)
+            )
+        else:
+            queryset = queryset.filter(managed_departments__isnull=True)
+
+        return queryset
 
 class UserCountByDepartmentView(APIView):
     def get(self, request):
