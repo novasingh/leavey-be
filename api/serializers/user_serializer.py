@@ -69,3 +69,20 @@ class UserCreateSerializer(serializers.ModelSerializer):
             phone_number=validated_data.get('phone_number')
         )
         return user
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    role = serializers.StringRelatedField(read_only=True)
+    department = serializers.StringRelatedField(read_only=True)
+    date_joined = serializers.DateTimeField(read_only=True, format="%B %d, %Y")
+    is_active = serializers.BooleanField(read_only=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'phone_number', 'profile_picture', 'role', 'department',
+            'date_joined', 'is_active'
+        ]

@@ -27,7 +27,7 @@ from .models import LeaveRequest
 from .serializers import LeaveRequestSerializer
 
 
-from .serializers.user_serializer import  UserSerializer, UserCreateSerializer, ManagerListSerializer
+from .serializers.user_serializer import  UserSerializer, UserCreateSerializer, ManagerListSerializer, UserProfileSerializer
 from .serializers.role_serializer import RoleSerializer
 from .utils.emails import send_verification_email, send_password_reset_email
 from .serializers.event_serializer import EventSerializer
@@ -498,6 +498,15 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_object(self):
+        return self.request.user
+
 
 class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.all().order_by('name')

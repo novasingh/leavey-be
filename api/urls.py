@@ -31,6 +31,7 @@ urlpatterns = [
     path('managers/', views.ManagerListView.as_view(), name='manager-list'),
     path('departments/user-count', UserCountByDepartmentView.as_view(), name='user-count-by-department'),
     path('leave-settings/', views.LeaveSettingView.as_view(), name='leave-settings'),
+    path('profile/', views.UserProfileView.as_view(), name='user-profile'),
 
     # Database seeding endpoints
     path('admin/seed/', seed_database_view, name='seed-database'),
