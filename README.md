@@ -27,6 +27,10 @@
    ```bash
    pip install -r requirements.txt
    ```
+   **Note**: The requirements.txt file should include Pillow. If you are installing dependencies manually, make sure to install Pillow for image handling:
+   ```bash
+   pip install Pillow
+   ```
 5. Copy `.env.example` to `.env` and update the values as needed:
    ```bash
    cp .env.example .env
