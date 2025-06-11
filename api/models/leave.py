@@ -5,6 +5,7 @@ from api.models.role import Role
 class LeaveType(models.Model):
     leave_type_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
+    icon = models.CharField(max_length=5, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     days = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)

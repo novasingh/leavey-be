@@ -3,6 +3,7 @@ from django.conf import settings
 
 class Department(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    icon = models.CharField(max_length=5, blank=True, null=True)
     description = models.TextField(default="", blank=True)
     is_active = models.BooleanField(default=True)
     manager = models.ForeignKey(
@@ -10,7 +11,8 @@ class Department(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='managed_departments'
+        related_name='managed_departments',
+        unique=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
