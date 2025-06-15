@@ -6,13 +6,12 @@ class Department(models.Model):
     icon = models.CharField(max_length=5, blank=True, null=True)
     description = models.TextField(default="", blank=True)
     is_active = models.BooleanField(default=True)
-    manager = models.ForeignKey(
+    manager = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='managed_departments',
-        unique=True
+        related_name='managed_departments'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
