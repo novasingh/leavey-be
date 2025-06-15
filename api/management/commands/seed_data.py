@@ -555,7 +555,7 @@ class Command(BaseCommand):
             for _ in range(random.randint(2, 4)):
                 leave_type = random.choice(leave_types)
                 start_date = fake.date_between(start_date='-1y', end_date='today')
-                end_date = start_date + datetime.timedelta(days=random.randint(1, 5))
+                end_date = start_date + timedelta(days=random.randint(1, 5))
                 status = random.choice(['Pending', 'Approved', 'Rejected'])
                 reviewed_by = None
                 reviewed_at = None
