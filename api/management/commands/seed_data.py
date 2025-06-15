@@ -43,6 +43,9 @@ class Command(BaseCommand):
                 # Seed users
                 self.seed_users(force)
                 
+                # Seed dummy data
+                self.seed_dummy_data(force)
+                
             self.stdout.write(self.style.SUCCESS('Database seeding completed successfully!'))
             
         except Exception as e:
@@ -445,3 +448,134 @@ class Command(BaseCommand):
             
         except User.DoesNotExist as e:
             self.stdout.write(self.style.WARNING(f'Could not set manager relationships: {str(e)}'))
+
+    def seed_dummy_data(self, force=False):
+        """Seed comprehensive dummy data for testing"""
+        import random
+        from faker import Faker
+        from api.models.leave import LeaveType, LeaveRequest
+        from api.models.event import Event
+        fake = Faker()
+        # 1. Departments
+        department_names = [
+            'Engineering', 'Sales', 'Marketing', 'Support'
+        ]
+        departments = []
+        for name in department_names:
+            dept, _ = Department.objects.get_or_create(
+                name=name,
+                defaults={'description': f'{name} department', 'is_active': True}
+            )
+            departments.append(dept)
+        # 2. Roles
+        admin_role = Role.objects.get(name='Admin')
+        manager_role = Role.objects.get(name='Manager')
+        hr_role = Role.objects.get(name='HR')
+        employee_role = Role.objects.get(name='Employee')
+        # 3. Users
+        users = []
+        # Create 1 admin, 2 HR, 4 managers, rest employees
+        admin_user, _ = User.objects.get_or_create(
+            email='dummyadmin@leavey.com',
+            defaults={
+                'username': 'dummyadmin',
+                'first_name': 'Dummy',
+                'last_name': 'Admin',
+                'role': admin_role,
+                'department': departments[0],
+                'is_staff': True,
+                'is_superuser': True,
+                'is_active': True,
+                'is_email_verified': True,
+                'password': make_password('dummyadmin123')
+            }
+        )
+        users.append(admin_user)
+        for i in range(2):
+            user, _ = User.objects.get_or_create(
+                email=f'dummyhr{i+1}@leavey.com',
+                defaults={
+                    'username': f'dummyhr{i+1}',
+                    'first_name': fake.first_name(),
+                    'last_name': fake.last_name(),
+                    'role': hr_role,
+                    'department': departments[1],
+                    'is_staff': True,
+                    'is_superuser': False,
+                    'is_active': True,
+                    'is_email_verified': True,
+                    'password': make_password('dummyhr123')
+                }
+            )
+            users.append(user)
+        managers = []
+        for i in range(4):
+            user, _ = User.objects.get_or_create(
+                email=f'dummymanager{i+1}@leavey.com',
+                defaults={
+                    'username': f'dummymanager{i+1}',
+                    'first_name': fake.first_name(),
+                    'last_name': fake.last_name(),
+                    'role': manager_role,
+                    'department': departments[i],
+                    'is_staff': True,
+                    'is_superuser': False,
+                    'is_active': True,
+                    'is_email_verified': True,
+                    'password': make_password('dummymanager123')
+                }
+            )
+            managers.append(user)
+            users.append(user)
+        # 43 employees
+        for i in range(43):
+            dept = random.choice(departments)
+            manager = managers[departments.index(dept)]
+            user, _ = User.objects.get_or_create(
+                email=f'dummyemployee{i+1}@leavey.com',
+                defaults={
+                    'username': f'dummyemployee{i+1}',
+                    'first_name': fake.first_name(),
+                    'last_name': fake.last_name(),
+                    'role': employee_role,
+                    'department': dept,
+                    'manager': manager,
+                    'is_staff': False,
+                    'is_superuser': False,
+                    'is_active': True,
+                    'is_email_verified': True,
+                    'password': make_password('dummyemployee123')
+                }
+            )
+            users.append(user)
+        # 4. Leave Requests
+        leave_types = list(LeaveType.objects.all())
+        for user in users:
+            # Each user gets 2-4 leave requests
+            for _ in range(random.randint(2, 4)):
+                leave_type = random.choice(leave_types)
+                start_date = fake.date_between(start_date='-1y', end_date='today')
+                end_date = start_date + datetime.timedelta(days=random.randint(1, 5))
+                status = random.choice(['Pending', 'Approved', 'Rejected'])
+                reviewed_by = None
+                reviewed_at = None
+                note = None
+                if status != 'Pending':
+                    reviewed_by = user.manager if user.manager else admin_user
+                    reviewed_at = fake.date_time_between(start_date=start_date, end_date=end_date)
+                    note = fake.sentence()
+                LeaveRequest.objects.get_or_create(
+                    user=user,
+                    leave_type=leave_type,
+                    start_date=start_date,
+                    end_date=end_date,
+                    defaults={
+                        'days': (end_date - start_date).days + 1,
+                        'message': fake.sentence(),
+                        'status': status,
+                        'reviewed_by': reviewed_by,
+                        'reviewed_at': reviewed_at,
+                        'note': note
+                    }
+                )
+        self.stdout.write(self.style.SUCCESS('Dummy data seeded: 4 departments, 50 users, leave requests.'))
