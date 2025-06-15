@@ -5,6 +5,7 @@ from api.models.department import Department
 from api.models.user import User
 from django.contrib.auth.hashers import make_password
 import logging
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -230,7 +231,6 @@ class Command(BaseCommand):
     def seed_public_holidays(self, force=False):
         """Seed default public holidays for Malaysia using the Event model fields"""
         from api.models.event import Event
-        from datetime import datetime
         holidays_data = [
             {
                 'holiday_name': "New Year's Day",

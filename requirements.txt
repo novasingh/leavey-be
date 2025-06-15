@@ -21,3 +21,7 @@ PyJWT>=2.8.0
 html2text>=2020.1.16
 # JSONField (for older Django, not needed for 3.1+)
 jsonfield>=3.1
+# ImageField support
+Pillow>=10.0.0
+# Faker for dummy data
+Faker>=25.0.0
