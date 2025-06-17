@@ -36,11 +36,28 @@ class LeaveRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            old = LeaveRequest.objects.get(pk=self.pk)
+            old_status = old.status
         if self.start_date and self.end_date:
             self.days = (self.end_date - self.start_date).days + 1
         else:
             self.days = None
         super().save(*args, **kwargs)
+        # Notification logic
+        from api.utils.notifications import send_email_notification, send_in_app_notification
+        # Notify manager on new leave request
+        if is_new:
+            manager = self.user.department.manager if hasattr(self.user, 'department') and self.user.department else None
+            if manager:
+                send_email_notification([manager], "New Leave Request", f"{self.user.get_full_name()} has requested leave.")
+                send_in_app_notification([manager], "New Leave Request", f"{self.user.get_full_name()} has requested leave.", 'leave')
+        # Notify employee on approval/rejection
+        elif old_status and self.status in ['Approved', 'Rejected'] and self.status != old_status:
+            send_email_notification([self.user], f"Leave {self.status}", f"Your leave request has been {self.status.lower()}.")
+            send_in_app_notification([self.user], f"Leave {self.status}", f"Your leave request has been {self.status.lower()}.", 'leave')
 
 class LeaveSetting(models.Model):
     # Working Hours
@@ -65,3 +82,11 @@ class LeaveSetting(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         super(LeaveSetting, self).save(*args, **kwargs)
+        # Notification logic for office timing change
+        from api.utils.notifications import send_email_notification, send_in_app_notification
+        from api.models.user import User
+        # Notify all users if working hours change
+        if self.pk == 1 and (self.working_hours_start != '09:00' or self.working_hours_end != '17:00'):
+            users = User.objects.filter(is_active=True)
+            send_email_notification(users, "Office Timing Changed", f"New office hours: {self.working_hours_start} - {self.working_hours_end}")
+            send_in_app_notification(users, "Office Timing Changed", f"New office hours: {self.working_hours_start} - {self.working_hours_end}", 'office')

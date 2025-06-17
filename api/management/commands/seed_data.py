@@ -5,6 +5,9 @@ from api.models.department import Department
 from api.models.user import User
 from django.contrib.auth.hashers import make_password
 import logging
+import datetime
+from datetime import timedelta
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +62,7 @@ class Command(BaseCommand):
                 'name': 'Admin',
                 'description': 'System administrator with full access to all features and settings',
                 'permissions': [
-                    'dashboard', 'department', 'role', 'leave-setting', 'employees'
+                    'dashboard', 'department', 'role', 'leave-setting', 'employees', 'notification'
                 ]
             },
             {
@@ -558,7 +561,7 @@ class Command(BaseCommand):
                 end_date = start_date + datetime.timedelta(days=random.randint(1, 5))
                 status = random.choice(['Pending', 'Approved', 'Rejected'])
                 reviewed_by = None
-                reviewed_at = None
+                reviewed_at = timezone.now() if status in ['Approved', 'Rejected'] else None
                 note = None
                 if status != 'Pending':
                     reviewed_by = user.manager if user.manager else admin_user

@@ -1,11 +1,14 @@
 __pycache__/
 */__pycache__/
-api/__pycache__
+api/__pycache__/
+api/migrations/__pycache__/
+api/utils/__pycache__/
+api/serializers/__pycache__/
+api/models/__pycache__/
+leavey_project/__pycache__/
 api/**/__pycache__/
 api/**/.pytest_cache/
 *.pyc
-
-# Environment variables file
 .env
 
 # Virtual environment
