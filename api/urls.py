@@ -5,6 +5,7 @@ from .controllers.seed_controller import seed_database_view, seed_status_public
 from .controllers.cors_test_controller import cors_test, cors_test_post
 from .controllers.permission_controller import permission_all
 from .views import UserCountByDepartmentView, EventViewSet
+from .controllers.notification_controller import NotificationViewSet
 
 router = DefaultRouter()
 router.register(r'roles', views.RoleViewSet)
@@ -13,6 +14,7 @@ router.register(r'departments', views.DepartmentViewSet, basename='department')
 router.register(r'events', views.EventViewSet)
 router.register(r'leave-types', views.LeaveTypeViewSet)
 router.register(r'leave-requests', views.LeaveRequestViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 urlpatterns = [
     # Authentication endpoints

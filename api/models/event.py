@@ -17,7 +17,20 @@ class Event(models.Model):
     #     return f"{self.holiday_name} on {self.date}"
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_date = None
+        if not is_new:
+            old = Event.objects.get(pk=self.pk)
+            old_date = old.date
         if self.date:
             # Automatically fill day name from date
             self.day = self.date.strftime('%A')  # e.g. 'Monday', 'Tuesday'
         super().save(*args, **kwargs)
+        # Notification logic
+        from api.utils.notifications import send_email_notification, send_in_app_notification
+        from api.models.user import User
+        # Notify all users on new or changed holiday
+        if is_new or (old_date and self.date != old_date):
+            users = User.objects.filter(is_active=True)
+            send_email_notification(users, f"New Holiday: {self.holiday_name}", f"{self.holiday_name} is on {self.date}.")
+            send_in_app_notification(users, f"New Holiday: {self.holiday_name}", f"{self.holiday_name} is on {self.date}.", 'holiday')

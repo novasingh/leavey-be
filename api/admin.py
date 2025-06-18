@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Role, Department, LeaveType, LeaveRequest, Event
+from .models import User, Role, Department, LeaveType, LeaveRequest, Event, Notification, NotificationSetting
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -46,4 +46,20 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ('day', 'date', 'holiday_name', 'holiday_type')
     search_fields = ('day', 'date', 'holiday_name', 'holiday_type')
     readonly_fields = ('day',)
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    def users_list(self, obj):
+        return ", ".join(str(u.id) for u in obj.users.all())
+    users_list.short_description = 'Users'
+    list_display = ('users_list', 'title', 'notif_type', 'is_read', 'created_at')
+    list_filter = ('notif_type', 'is_read', 'created_at')
+    search_fields = ('title', 'message')
+    readonly_fields = ('created_at',)
+
+@admin.register(NotificationSetting)
+class NotificationSettingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'email_notifications', 'in_app_notifications')
+    list_filter = ('email_notifications', 'in_app_notifications')
+    search_fields = ('user__username', 'user__email')
 

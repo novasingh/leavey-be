@@ -24,17 +24,19 @@ def send_verification_email(user, verification_url):
 def send_password_reset_email(user, reset_url):
     """Send password reset email"""
     subject = 'Reset your password'
-    html_message = render_to_string('email_templates/reset_password.html', {
-        'user': user,
-        'reset_url': reset_url
-    })
+    try:
+        html_message = render_to_string('reset_password.html', {
+            'user': user,
+            'reset_url': reset_url
+        })
+    except Exception:
+        html_message = f"Hello {user.first_name},\nReset your password here: {reset_url}"
     plain_message = strip_tags(html_message)
-    
     send_mail(
         subject,
         plain_message,
         settings.DEFAULT_FROM_EMAIL,
         [user.email],
         html_message=html_message,
-        fail_silently=False,
+        fail_silently=True,
     )
