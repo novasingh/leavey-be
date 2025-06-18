@@ -1,6 +1,6 @@
 # Database Seeding for Leavey API
 
-This document explains how to seed your database with default data including roles, departments, and users.
+This document explains how to seed your database with default and dummy data, including roles, departments, users, leave types, holidays, leave requests, approvals, and more.
 
 ## Default Data Created
 
@@ -18,14 +18,20 @@ This document explains how to seed your database with default data including rol
 - **Operations**: Operations and business processes
 
 ### Default Users
-| Role | Email | Username | Password | Department |
-|------|-------|----------|----------|------------|
-| Admin | admin@leavey.com | admin | admin123 | Administration |
-| Manager | manager@leavey.com | manager | manager123 | IT |
-| HR | hr@leavey.com | hr | hr123 | Human Resources |
-| Employee | employee@leavey.com | employee | employee123 | Finance |
+| Role     | Email               | Username | Password    | Department        |
+|----------|---------------------|----------|-------------|-------------------|
+| Admin    | admin@leavey.com    | admin    | admin123    | Administration    |
+| Manager  | manager@leavey.com  | manager  | manager123  | IT                |
+| HR       | hr@leavey.com       | hr       | hr123       | Human Resources   |
+| Employee | employee@leavey.com | employee | employee123 | Finance           |
 
 **⚠️ IMPORTANT: Change these default passwords in production!**
+
+### Dummy Data
+- 50+ dummy users (randomized)
+- Leave types, leave settings, public holidays (Malaysia)
+- Leave requests and approvals
+- Notification settings and sample notifications
 
 ## How to Seed the Database
 
@@ -58,10 +64,8 @@ Set the environment variable to enable automatic seeding when the app starts:
 ```bash
 # Windows
 set AUTO_SEED=True
-
 # Linux/Mac
 export AUTO_SEED=True
-
 # Or add to your .env file
 AUTO_SEED=True
 ```
@@ -109,7 +113,7 @@ Response:
 {
     "roles_count": 4,
     "departments_count": 5,
-    "users_count": 4,
+    "users_count": 54,
     "has_admin": true,
     "is_seeded": true
 }
@@ -199,3 +203,5 @@ You can modify:
 - Role names and descriptions
 - Department names and descriptions
 - User-manager relationships
+- Dummy data generation logic
+- Leave types, holidays, and notification templates

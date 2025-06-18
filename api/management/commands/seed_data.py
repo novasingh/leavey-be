@@ -50,6 +50,13 @@ class Command(BaseCommand):
                 self.seed_dummy_data(force)
                 
             self.stdout.write(self.style.SUCCESS('Database seeding completed successfully!'))
+            self.stdout.write(self.style.SUCCESS('---'))
+            self.stdout.write(self.style.SUCCESS('University of Malaya Group Project'))
+            self.stdout.write(self.style.SUCCESS('Abdi Ahmed Mohamed (2190992)'))
+            self.stdout.write(self.style.SUCCESS('Akashdeep Singh (24072095)'))
+            self.stdout.write(self.style.SUCCESS('Najla Geis Junaid Bawazier (24068527)'))
+            self.stdout.write(self.style.SUCCESS('Salsabila Harlen (24076059)'))
+            self.stdout.write(self.style.SUCCESS('Zahra Fathanah (23067637)'))
             
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Error during seeding: {str(e)}'))
