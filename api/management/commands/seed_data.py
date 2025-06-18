@@ -323,7 +323,7 @@ class Command(BaseCommand):
             },
         ]
         for holiday in holidays_data:
-            date_obj = datetime.strptime(holiday['date'], '%Y-%m-%d').date()
+            date_obj = datetime.datetime.strptime(holiday['date'], '%Y-%m-%d').date()
             event, created = Event.objects.get_or_create(
                 holiday_name=holiday['holiday_name'],
                 date=date_obj,
