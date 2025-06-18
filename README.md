@@ -1,11 +1,11 @@
 # University of Malaya Group Project
 
 **Students:**
-- Abdi Ahmed Mohamed (2190992)
-- Akashdeep Singh (24072095)
-- Najla Geis Junaid Bawazier (24068527)
-- Salsabila Harlen (24076059)
-- Zahra Fathanah (23067637)
+- [Abdi Ahmed Mohamed (2190992)](https://github.com/AbdiAhmedMo)
+- [Akashdeep Singh (24072095)](https://github.com/novasingh)
+- [Najla Geis Junaid Bawazier (24068527)](https://github.com/julliebwz)
+- [Salsabila Harlen (24076059)](https://github.com/Reeedr12)
+- [Zahra Fathanah (23067637)](https://github.com/zfathanah)
 
 # Leavey Project
 
