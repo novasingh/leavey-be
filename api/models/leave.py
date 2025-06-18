@@ -51,12 +51,38 @@ class LeaveRequest(models.Model):
         # Notify manager on new leave request
         if is_new:
             manager = self.user.department.manager if hasattr(self.user, 'department') and self.user.department else None
+            leave_context = {
+                'user': self.user,
+                'leave_type': self.leave_type.name,
+                'start_date': self.start_date,
+                'end_date': self.end_date,
+                'status': self.status
+            }
             if manager:
-                send_email_notification([manager], "New Leave Request", f"{self.user.get_full_name()} has requested leave.")
+                send_email_notification(
+                    [manager],
+                    "New Leave Request",
+                    f"{self.user.get_full_name()} has requested leave.",
+                    template="leave_submitted.html",
+                    context=leave_context
+                )
                 send_in_app_notification([manager], "New Leave Request", f"{self.user.get_full_name()} has requested leave.", 'leave')
         # Notify employee on approval/rejection
         elif old_status and self.status in ['Approved', 'Rejected'] and self.status != old_status:
-            send_email_notification([self.user], f"Leave {self.status}", f"Your leave request has been {self.status.lower()}.")
+            leave_context = {
+                'user': self.user,
+                'leave_type': self.leave_type.name,
+                'start_date': self.start_date,
+                'end_date': self.end_date,
+                'status': self.status
+            }
+            send_email_notification(
+                [self.user],
+                f"Leave {self.status}",
+                f"Your leave request has been {self.status.lower()}.",
+                template="leave_status.html",
+                context=leave_context
+            )
             send_in_app_notification([self.user], f"Leave {self.status}", f"Your leave request has been {self.status.lower()}.", 'leave')
 
 class LeaveSetting(models.Model):
